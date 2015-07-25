@@ -7,6 +7,9 @@ dtb-$(CONFIG_MACH_ESPRESSO7420) += exynos7420-espresso7420.dtb exynos7420-univer
 dtb-$(CONFIG_MACH_UNIVERSAL5433) += exynos5433-universal5433_rev02.dtb exynos5433-universal5433.dtb
 dtb-$(CONFIG_MACH_SMDK7580) += exynos7580-smdk7580.dtb
 dtb-$(CONFIG_MACH_UNIVERSAL7580) += exynos7580-universal7580.dtb
+
+dtb-$(CONFIG_MACH_UNIVERSAL7420) += G92XP_universal.dtb
+
 targets += dtbs
 
 DTB_NAMES := $(subst $\",,$(CONFIG_BUILD_ARM64_APPENDED_DTB_IMAGE_NAMES))

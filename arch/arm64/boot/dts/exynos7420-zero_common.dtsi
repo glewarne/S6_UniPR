@@ -834,7 +834,7 @@
 			stm,grip_area = <512>;
 			stm,regulator_dvdd = "tsp_io";
 			stm,regulator_avdd = "tsp_avdd";
-			stm,project_name = "ZERO", "G925";
+			stm,project_name_E = "ZERO", "G925";
 			stm,tspid_gpio = <&gpg1 4 0>;
 			stm,tspid2_gpio = <&gpr3 2 0>;
 		};

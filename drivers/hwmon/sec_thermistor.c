@@ -31,6 +31,7 @@
 #include <linux/iio/consumer.h>
 #include <linux/platform_data/sec_thermistor.h>
 #include <linux/sec_sysfs.h>
+#include <linux/variant_detection.h>
 
 #define ADC_SAMPLING_CNT	7
 
@@ -86,8 +87,13 @@ sec_therm_parse_dt(struct platform_device *pdev)
 	if (!pdata)
 		return ERR_PTR(-ENOMEM);
 
-	if (!of_get_property(np, "adc_array", &len1))
+	if (variant_edge == IS_EDGE) {
+		if (!of_get_property(np, "adc_array", &len1))
+			return ERR_PTR(-ENOENT);
+	} else {
 		return ERR_PTR(-ENOENT);
+	}
+
 	if (!of_get_property(np, "temp_array", &len2))
 		return ERR_PTR(-ENOENT);
 

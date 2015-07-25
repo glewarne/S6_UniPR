@@ -71,6 +71,7 @@
 #endif
 #include <linux/input/mt.h>
 #include "fts_ts.h"
+#include <linux/variant_detection.h>
 
 static struct i2c_driver fts_i2c_driver;
 
@@ -1703,12 +1704,21 @@ static int fts_parse_dt(struct i2c_client *client)
 	/* Optional parmeters(those values are not mandatory)
 	 * do not return error value even if fail to get the value
 	 */
-	of_property_read_string(np, "stm,firmware_name", &pdata->firmware_name);
 
-	if (of_property_read_string_index(np, "stm,project_name", 0, &pdata->project_name))
-		tsp_debug_dbg(true, dev, "skipped to get project_name property\n");
-	if (of_property_read_string_index(np, "stm,project_name", 1, &pdata->model_name))
-		tsp_debug_dbg(true, dev, "skipped to get model_name property\n");
+	if (variant_edge == NOT_EDGE) {
+		/* read Flat model device tree entries */		
+		of_property_read_string(np, "stm,firmware_name", &pdata->firmware_name);
+		if (of_property_read_string_index(np, "stm,project_name", 0, &pdata->project_name))
+			tsp_debug_dbg(true, dev, "skipped to get project_name property\n");
+		if (of_property_read_string_index(np, "stm,project_name", 1, &pdata->model_name))
+			tsp_debug_dbg(true, dev, "skipped to get model_name property\n");
+	} else {
+		/* read Edge model device tree entries */
+		if (of_property_read_string_index(np, "stm,project_name_E", 0, &pdata->project_name))
+			tsp_debug_dbg(true, dev, "skipped to get project_name property\n");
+		if (of_property_read_string_index(np, "stm,project_name_E", 1, &pdata->model_name))
+			tsp_debug_dbg(true, dev, "skipped to get model_name property\n");
+	}
 
 	pdata->max_width = 28;
 	pdata->support_hover = true;
@@ -1718,19 +1728,28 @@ static int fts_parse_dt(struct i2c_client *client)
 #endif
 
 #ifdef FTS_SUPPORT_TOUCH_KEY
-	if (of_property_read_u32(np, "stm,num_touchkey", &pdata->num_touchkey))
-		tsp_debug_dbg(true, dev, "skipped to get num_touchkey property\n");
-	else {
+	if (variant_edge == IS_EDGE) {
+		if (of_property_read_u32(np, "stm,num_touchkey", &pdata->num_touchkey))
+			tsp_debug_dbg(true, dev, "skipped to get num_touchkey property\n");
+		else {
+#ifdef FTS_SUPPORT_SIDE_GESTURE
+			pdata->support_sidegesture = true;
+#endif
+			pdata->support_mskey = true;
+			pdata->touchkey = fts_touchkeys;
+		
+			if (of_property_read_string(np, "stm,regulator_tk_led", &pdata->regulator_tk_led))
+				tsp_debug_dbg(true, dev, "skipped to get regulator_tk_led name property\n");
+			else
+				pdata->led_power = fts_led_power_ctrl;
+		}
+	} else {
 #ifdef FTS_SUPPORT_SIDE_GESTURE
 		pdata->support_sidegesture = true;
 #endif
 		pdata->support_mskey = true;
 		pdata->touchkey = fts_touchkeys;
-
-		if (of_property_read_string(np, "stm,regulator_tk_led", &pdata->regulator_tk_led))
-			tsp_debug_dbg(true, dev, "skipped to get regulator_tk_led name property\n");
-		else
-			pdata->led_power = fts_led_power_ctrl;
+		pdata->led_power = fts_led_power_ctrl;
 	}
 #endif
 
@@ -1852,7 +1871,6 @@ static int fts_setup_drv_data(struct i2c_client *client)
 		tsp_debug_info(true, &client->dev, "%s: DDI Type is %s[%d]\n",
 			__func__, info->ddi_type ? "MAGNA" : "SDC", info->ddi_type);
 	}
-
 #ifdef CONFIG_TRUSTONIC_TRUSTED_UI
 	tui_tsp_info = info;
 #endif

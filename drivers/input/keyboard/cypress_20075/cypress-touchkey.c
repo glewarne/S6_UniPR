@@ -25,6 +25,7 @@
 #include <linux/gpio.h>
 #include <linux/miscdevice.h>
 #include <linux/uaccess.h>
+#include <linux/variant_detection.h>
 
 #ifndef USE_OPEN_CLOSE
 #define USE_OPEN_CLOSE
@@ -96,7 +97,6 @@ static int touchled_cmd_reversed;
 static void change_touch_key_led_voltage(struct device *dev, int vol_mv)
 {
 	struct regulator *tled_regulator;
-
 	tled_regulator = regulator_get(NULL, TK_LED_REGULATOR_NAME);
 	if (IS_ERR(tled_regulator)) {
 		tk_debug_err(true, dev, "%s: failed to get resource %s\n", __func__,
@@ -130,7 +130,6 @@ static int i2c_touchkey_read(struct i2c_client *client,
 	int ret = 0;
 	int retry = 3;
 	struct touchkey_i2c *tkey_i2c = i2c_get_clientdata(client);
-
 	mutex_lock(&tkey_i2c->i2c_lock);
 
 	if ((client == NULL) || !(tkey_i2c->enabled)) {
@@ -162,7 +161,6 @@ static int i2c_touchkey_write(struct i2c_client *client,
 	int ret = 0;
 	int retry = 3;
 	struct touchkey_i2c *tkey_i2c = i2c_get_clientdata(client);
-
 	mutex_lock(&tkey_i2c->i2c_lock);
 
 	if ((client == NULL) || !(tkey_i2c->enabled)) {
@@ -2622,7 +2620,9 @@ static int __init touchkey_init(void)
 #ifdef TEST_JIG_MODE
 	int ret;
 #endif
-
+	if (variant_edge == IS_EDGE) {
+		return 0;
+	}
 	i2c_add_driver(&touchkey_i2c_driver);
 
 #ifdef TEST_JIG_MODE
@@ -2635,6 +2635,9 @@ static int __init touchkey_init(void)
 
 static void __exit touchkey_exit(void)
 {
+	if (variant_edge == IS_EDGE) {
+		return 0;
+	}
 	i2c_del_driver(&touchkey_i2c_driver);
 	touchkey_probe = false;
 }
